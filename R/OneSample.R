@@ -1,98 +1,152 @@
 # Purpose: Estimates 1-sample confidence bands
+# Updated: 2020-10-17
 
-#' Estimate 1-Sample Confidence Bands
+#' Sample Path of Survival Process
 #' 
-#' Constructs the confidence band on the log cumulative hazard (CH) scale,
-#' then transforms onto the survival scale. The critical value, on the
-#' log CH scale, is determined via simulation. 
+#' Perturbation realization of a sample path from \eqn{\sqrt{n}w(t)\{\hat{S}(t)-S(t)\}}.
 #' 
-#' @param time Observation time.
-#' @param status Status, 1 for an event, 0 for censoring.
-#' @param sig Significance level.
-#' @param paths Sample paths. 
-#' @param weights Either equiprecision "ep" or Hall-Wellner "hw". 
-#' @param L Lower endpoint of interval over which confidence bands are sought. 
-#' @param U Upper endpoint of interval over which confidence bands are sought.  
-#' 
-#' @return Object of class band, containing a table with the lower and upper
-#'   confidence bands.
-#' 
-#' @importFrom data.table data.table
-#' @importFrom methods new
-#' @importFrom stats quantile rnorm
-#' @importFrom survival Surv survfit 
+#' @param times Distinct observed event times.
+#' @param events Number of events at each time.
+#' @param nar Number at risk.
+#' @param surv Survival probability. 
+#' @param weight Weight to give each time point.
+#' @importFrom stats rnorm
+#' @return Numeric vector of the same length as `times`.
 
-oneSampleBand = function(time,status,sig=0.05,paths=1e3,weights="ep",L=NULL,U=NULL){
-  # Sample size
-  n = length(time);
-  # Observed KM
-  K = survfit(Surv(time,status)~1);
+SamplePath <- function(
+  times,
+  events,
+  nar,
+  surv,
+  weight = NULL
+) {
   
-  # Lower endpoint
-  L.min = min(K$time[K$surv<1]);
-  if(is.null(L)){L=L.min};
-  if(L<L.min){L=L.min};
-  # Upper endpoint
-  U.max = max(K$time[K$surv>0]);
-  if(is.null(U)){U=U.max};
-  if(U>U.max){U=U.max};
-  
-  # Key
-  flag = (K$n.event>0)&(K$time>=L)&(K$time<=U);
-  m = sum(flag);
-  
-  # Times
-  Tab = data.table("time"=unique(K$time[flag]));
-  
-  # Events
-  Tab$events = K$n.event[flag];
-
-  # NARs
-  Tab$nar = K$n.risk[flag];
-  
-  # Survival estimates
-  Tab$surv = K$surv[flag];
-  
-  # Cumulative hazard
-  Tab$cumhaz = cumsum(Tab$events/Tab$nar);
-  
-  # Standard errors
-  Tab$se = K$std.err[flag];
-  
-  # Weights
-  if(weights=="ep"){
-    Tab$weight = 1;
-  } else if(weights=="hw"){
-    Tab$weight = 1/(1+Tab$se^2);
-  }
-
-  # "Loop"
-  aux = function(r){
-    # Weights
-    if(max(Tab$events)==1){
-      Z = rnorm(n=m);
-    } else {
-      Z = sapply(E,function(x){rnorm(n=1,mean=0,sd=sqrt(x))});
-    }
-    # Loop over doots
-    V = (Z/Tab$nar);
-    # Cumulative sum
-    Q = cumsum(V);
-    # Scale
-    R = -sqrt(n)*(Tab$surv)*(Tab$weight)*Q;
-    # Output
-    return(max(abs(R)))
+  # Default to uniform weights.
+  if (is.null(weight)) {
+    weight <- rep(1, length(times))
   }
   
-  # Simulations
-  Sups = sapply(seq(1:paths),aux);
-  Ka = as.numeric(quantile(Sups,probs=1-sig));
+  # Perturbation weights.
+  z <- sapply(events, function(x) {
+    rnorm(n = 1, mean = 0, sd = sqrt(x))
+  })
   
-  # Results
-  Tab$L = sapply(Tab$surv-Ka/(Tab$weight*sqrt(n)),function(x){max(x,0)});
-  Tab$U = sapply(Tab$surv+Ka/(Tab$weight*sqrt(n)),function(x){min(x,1)});
+  # Scale
+  sample_path <- -weight * surv * cumsum(z * events / nar)
   
   # Output
-  Out = new(Class="band",Alpha=sig,Crit=Ka,Paths=paths,Samples=1,Table=Tab);
-  return(Out);
+  return(sample_path)
+}
+
+#' Estimate 1-Sample Confidence Bands
+#'
+#' Constructs the confidence band on the log cumulative hazard (CH) scale,
+#' then transforms onto the survival scale. The critical value, on the
+#' log CH scale, is determined via simulation.
+#'
+#' @param time Observation time.
+#' @param status Status, 1 for an event, 0 for censoring.
+#' @param alpha Alpha level.
+#' @param paths Sample paths.
+#' @param method Either equiprecision "EP" or Hall-Wellner "HW".
+#' @param lower Lower endpoint of interval over which confidence bands are sought.
+#' @param upper Upper endpoint of interval over which confidence bands are sought.
+#'
+#' @return Object of class band, containing a table with the lower and upper
+#'   confidence bands.
+#'
+#' @importFrom data.table data.table
+#' @importFrom methods new
+#' @importFrom stats quantile
+#' @importFrom survival Surv survfit
+
+Bands.OneSample <- function(
+  time, 
+  status, 
+  alpha = 0.05, 
+  paths = 1e3, 
+  method = "EP", 
+  lower = NULL, 
+  upper = NULL
+) {
+  
+  # Sample size
+  n <- length(time)
+  
+  # Observed KM
+  km_fit <- survfit(Surv(time, status) ~ 1)
+
+  # Lower endpoint, no less than the minimum observed event time.
+  lower_min <- min(km_fit$time[km_fit$surv < 1])
+  if (is.null(lower) || lower < lower_min) {
+    lower <- lower_min
+  }
+  
+  # Upper endpoint, no greater than the maximum observed event time.
+  upper_max <- max(km_fit$time[km_fit$surv > 0])
+  if (is.null(upper) || upper > upper_max) {
+    upper <- upper_max
+  }
+
+  # Jump indicator.
+  is_jump <- (km_fit$n.event > 0) & (km_fit$time >= lower) & (km_fit$time <= upper)
+  
+  # Process table.
+  process_tab <- data.table(
+    "time" = unique(km_fit$time[is_jump]),
+    "events" = km_fit$n.event[is_jump],
+    "nar" = km_fit$n.risk[is_jump],
+    "surv" = km_fit$surv[is_jump],
+    "cumhaz" = km_fit$cumhaz[is_jump],
+    "se" = km_fit$std.err[is_jump]
+  )
+
+  # Weights
+  if (method == "EP") {
+    process_tab$weight <- 1
+  } else if (method == "HW") {
+    process_tab$weight <- 1 / (1 + process_tab$se^2)
+  }
+
+  # Simulations:
+  # Generate a sample path and find the supremum.
+  sim <- sapply(
+    seq_len(paths),
+    function(x) {
+      sample_path <- SamplePath(
+        times = process_tab$time,
+        events = process_tab$events,
+        nar = process_tab$nar,
+        surv = process_tab$surv,
+        weight = process_tab$weight
+      )
+      sup <- sqrt(n) * max(abs(sample_path))
+      return(sup)
+    }
+  )
+  
+  # Critical value.
+  critical_value <- as.numeric(quantile(sim, probs = 1 - alpha))
+
+  # Confidence bands.
+  process_tab$lower <- sapply(
+    process_tab$surv - critical_value / (process_tab$weight * sqrt(n)),
+    function(x) {max(x, 0)}
+  )
+  process_tab$upper <- sapply(
+    process_tab$surv + critical_value / (process_tab$weight * sqrt(n)),
+    function(x) {min(x, 1)}
+  )
+
+  # Output
+  out <- new(
+    Class = "band", 
+    Alpha = alpha, 
+    Crit = critical_value, 
+    Paths = paths, 
+    Pvalue = NA_real_,
+    Samples = 1, 
+    Table = process_tab
+  )
+  return(out)
 }

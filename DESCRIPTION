@@ -1,15 +1,23 @@
 Package: Bands
 Title: Confidence Bands for Survival Functions
-Version: 0.0.1
-Authors@R: person("Zachary", "McCaw", email = "zmccaw@g.harvard.edu", role = c("aut", "cre"))
+Date: 2020-10-17
+Version: 0.1.0
+Authors@R: 
+    person(given = "Zachary",
+           family = "McCaw",
+           role = c("aut", "cre"),
+           email = "zmccaw@alumni.harvard.edu",
+           comment = c(ORCID = "0000-0002-2006-9828")
+           )
 Description: Constructs confidence bands for survival functions using sample path simulation. 
 Depends: R (>= 3.4.0)
 License: GPL-3
 Encoding: UTF-8
 Imports:
+	data.table,
 	ggplot2,
 	methods,
 	stats,
 	survival
 LazyData: true
-RoxygenNote: 6.1.0
+RoxygenNote: 7.1.1

@@ -14,10 +14,12 @@ Defines the object class returned by fitting functions.
 
 \item{\code{Crit}}{Critical value.}
 
-\item{\code{Paths}}{Sample paths.}
+\item{\code{Paths}}{Number of simulated sample paths.}
+
+\item{\code{Pvalue}}{P-value for the difference of survival curves.}
 
 \item{\code{Samples}}{Number of samples.}
 
-\item{\code{Table}}{Results table.}
+\item{\code{Table}}{Tabulated survival function with confidence bands.}
 }}
 

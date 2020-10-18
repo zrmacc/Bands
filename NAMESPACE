@@ -2,8 +2,7 @@
 
 S3method(plot,band)
 S3method(print,band)
-export(survBands)
-export(survKS)
+export(SurvBands)
 exportClasses(band)
 import(ggplot2)
 importFrom(data.table,data.table)
