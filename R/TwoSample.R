@@ -6,7 +6,7 @@
 #' @param time Observation time.
 #' @param status Status, 1 for an event, 0 for censoring.
 #' @param arm Treatment indicator, 1 for target group, 0 for reference.
-#' @param sig Significance level.
+#' @param alpha Type I error level.
 #' @param paths Sample paths.
 #' @param method Either equiprecision "EP" or Hall-Wellner "HW".
 #' @param lower Lower endpoint of interval over which confidence bands are sought.

@@ -7,7 +7,7 @@
 Plot.TwoSample(band)
 }
 \arguments{
-\item{B}{Object of class band.}
+\item{band}{Object of class band.}
 }
 \value{
 An object of class `ggplot`.

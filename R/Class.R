@@ -71,8 +71,10 @@ print.band <- function(x, ...) {
   cat("Sample paths:", x@Paths, "\n")
   
   # P-value
-  cat("P-value for difference of survival curves:", 
-      signif(x@Pvalue, digits = 3), "\n")
+  if (samples == 2) {
+    cat("P-value for difference of survival curves:", 
+        signif(x@Pvalue, digits = 3), "\n")
+  }
 }
 
 

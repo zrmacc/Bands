@@ -22,6 +22,8 @@ Bands.TwoSample(
 
 \item{arm}{Treatment indicator, 1 for target group, 0 for reference.}
 
+\item{alpha}{Type I error level.}
+
 \item{paths}{Sample paths.}
 
 \item{method}{Either equiprecision "EP" or Hall-Wellner "HW".}
@@ -29,8 +31,6 @@ Bands.TwoSample(
 \item{lower}{Lower endpoint of interval over which confidence bands are sought.}
 
 \item{upper}{Upper endpoint of interval over which confidence bands are sought.}
-
-\item{sig}{Significance level.}
 }
 \value{
 Object of class band, containing the lower and upper confidence bands.

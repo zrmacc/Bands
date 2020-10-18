@@ -1,0 +1,7 @@
+\documentclass{article}
+\usepackage{pdfpages}
+%\VignetteIndexEntry{Survival Bands}
+
+\begin{document}
+\includepdf[pages=-, fitpaper=true]{Vignette.pdf}
+\end{document}

@@ -1,5 +1,5 @@
 # Purpose: Plotting Confidence Bands
-# Updated: 19/03/20
+# Updated: 2020-10-18
 
 #' Master Plotting Function
 #'
@@ -24,6 +24,10 @@ PlotBands <- function(band) {
 #' @return An object of class `ggplot`.
 
 Plot.OneSample <- function(band) {
+  surv <- NULL
+  time <- NULL
+  lower <- NULL
+  upper <- NULL
   q <- ggplot(data = band@Table) +
     theme_bw() + 
     geom_ribbon(
@@ -41,11 +45,15 @@ Plot.OneSample <- function(band) {
 
 #' Plot 2-Sample Confidence Band
 #'
-#' @param B Object of class band.
+#' @param band Object of class band.
 #' @import ggplot2
 #' @return An object of class `ggplot`.
 
 Plot.TwoSample <- function(band) {
+  delta <- NULL
+  time <- NULL
+  lower <- NULL
+  upper <- NULL
   q <- ggplot(data = band@Table) +
     theme_bw() + 
     geom_step(
